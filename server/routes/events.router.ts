@@ -11,12 +11,14 @@ eventRouter.use(express.json());
 // GET
 eventRouter.get("/", async (_req: Request, res: Response) => {
     try {
-        if (collections.Events === undefined){
+        if (collections.Events === undefined) {
             return undefined;
         }
-       const events = (await collections.Events.find({}).toArray()) as unknown as Event[];
+        const events = (await collections.Events.find({}).toArray()) as unknown as Event[];
 
         res.status(200).send(events);
+
+        return events;
     } catch (error) {
         res.status(500).send(error);
     }
@@ -26,9 +28,9 @@ eventRouter.get("/:id", async (req: Request, res: Response) => {
     const id = req?.params?.id;
 
     try {
-        
+
         const query = { _id: new ObjectId(id) };
-        if (collections.Events === undefined){
+        if (collections.Events === undefined) {
             return undefined;
         }
         const event = (await collections.Events.findOne(query)) as unknown as Event;
@@ -45,7 +47,7 @@ eventRouter.post("/", async (req: Request, res: Response) => {
     try {
         const newEvent = req.body as Event;
         console.log(newEvent);
-        if (!collections.Events){
+        if (!collections.Events) {
             return undefined;
         }
         const result = await collections.Events.insertOne(newEvent);
@@ -65,7 +67,7 @@ eventRouter.put("/:id", async (req: Request, res: Response) => {
     try {
         const updatedEvent: Event = req.body as Event;
         const query = { _id: new ObjectId(id) };
-        if (!collections.Events){
+        if (!collections.Events) {
             return undefined
         }
         const result = await collections.Events.updateOne(query, { $set: updatedEvent });
@@ -84,7 +86,7 @@ eventRouter.delete("/:id", async (req: Request, res: Response) => {
 
     try {
         const query = { _id: new ObjectId(id) };
-        if (!collections.Events){
+        if (!collections.Events) {
             return undefined;
         }
         const result = await collections.Events.deleteOne(query);
@@ -95,6 +97,26 @@ eventRouter.delete("/:id", async (req: Request, res: Response) => {
             res.status(400).send(`Failed to remove event with id ${id}`);
         } else if (!result.deletedCount) {
             res.status(404).send(`event with id ${id} does not exist`);
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(400).send(error);
+    }
+});
+// DELETE ALL
+eventRouter.delete("/", async (req: Request, res: Response) => {
+    try {
+        if (collections.Events === undefined) {
+            return undefined;
+        }
+        const result = await collections.Events.deleteMany({});
+
+        if (result && result.deletedCount) {
+            res.status(202).send('Successfully removed all event');
+        } else if (!result) {
+            res.status(400).send(`Failed to remove event`);
+        } else if (!result.deletedCount) {
+            res.status(404).send(`event does not exist`);
         }
     } catch (error) {
         console.error(error);
